@@ -286,6 +286,7 @@
                 data.session = data.response.sessionNum;
                 session = data.response.sessionNum;
                 jsPsych.data.addProperties({sessionID: data.response.sessionNum});
+                filename = 'subj_'+userID+'_'+'session_'+session+'.csv',
             }
         };
 
@@ -314,7 +315,7 @@
             type: jsPsychPipe,
             action: "save",
             experiment_id: "6gvNWc8ZdqEq",
-            filename: 'subj_'+userID+'_'+'session_'+session+'.csv',
+            filename: filename,
             data_string: ()=>jsPsych.data.get().filter([{trial_type: "image-keyboard-response"},{trial_type: "image-slider-response"},{trial_type: "multi-image-keyboard-response"}]).csv()
         };
 
@@ -519,5 +520,6 @@
     </script>
 
 </html>
+
 
 
