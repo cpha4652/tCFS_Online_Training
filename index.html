@@ -52,7 +52,7 @@
         var showSurvey = 1;
         var isSONAPaid = 0;
         var userID = 0;
-        const filename = `${userID}.csv`;
+        var filename = `${userID}.csv`;
     
         var session = 0;
         var researcher_name = "Cameron Kyle Phan & Grace Ziqi Zhou";
@@ -149,7 +149,6 @@
             on_finish: function(data){ 
                 jsPsych.data.addProperties({subjID: data.response.response});
                 userID = data.response.response;
-                filename = `${userID}.csv`;
                 if (data.response.response % 2 == 1)
                 {
                     for (let f=0; f < nRep*hiP; f++)
@@ -188,7 +187,6 @@
             on_finish: function(data){ 
                 jsPsych.data.addProperties({subjID: data.response.response});
                 userID = data.response.response;
-                filename = `${userID}.csv`;
                 if (data.response.response % 2 == 1)
                 {
                     for (let f=0; f < nRep*hiP; f++)
@@ -316,7 +314,7 @@
             type: jsPsychPipe,
             action: "save",
             experiment_id: "6gvNWc8ZdqEq",
-            filename: filename,
+            filename: 'subj_'+userID+'_'+'session_'+session+'.csv',
             data_string: ()=>jsPsych.data.get().filter([{trial_type: "image-keyboard-response"},{trial_type: "image-slider-response"},{trial_type: "multi-image-keyboard-response"}]).csv()
         };
 
@@ -521,4 +519,5 @@
     </script>
 
 </html>
+
 
