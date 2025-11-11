@@ -48,7 +48,7 @@
         var lowP = 0.15;
         var hiP = 0.35;
 
-        var IsOnline = 0;
+        var IsOnline = 1;
         var showSurvey = 1;
         var isSONAPaid = 0;
         var userID = 0;
@@ -149,6 +149,7 @@
             on_finish: function(data){ 
                 jsPsych.data.addProperties({subjID: data.response.response});
                 userID = data.response.response;
+                filename = `${userID}.csv`;
                 if (data.response.response % 2 == 1)
                 {
                     for (let f=0; f < nRep*hiP; f++)
@@ -169,7 +170,7 @@
                         fullList.push(stimTargets[1]);
                         fullList.push(stimTargets[3]);
                     }
-                    for (let f=0; f < nRep*0.1; f++)
+                    for (let f=0; f < nRep*lowP; f++)
                     {
                         fullList.push(stimTargets[0]);
                         fullList.push(stimTargets[2]);
@@ -187,7 +188,7 @@
             on_finish: function(data){ 
                 jsPsych.data.addProperties({subjID: data.response.response});
                 userID = data.response.response;
-                
+                filename = `${userID}.csv`;
                 if (data.response.response % 2 == 1)
                 {
                     for (let f=0; f < nRep*hiP; f++)
@@ -520,3 +521,4 @@
     </script>
 
 </html>
+
