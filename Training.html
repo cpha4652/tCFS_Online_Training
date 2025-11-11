@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Training Session</title>
+        <meta charset="UTF-8">
+        <script src="jspsych/jspsych.js"></script>    
+        <link rel="stylesheet" type="text/css" href="jspsych/jspsych.css" />
+        <script type="text/javascript" src="jspsych/plugin-html-keyboard-response.js"></script>
+        <script type="text/javascript" src="jspsych/plugin-html-button-response.js"></script>
+        <script type="text/javascript" src="jspsych/plugin-survey-text.js"></script>
+        <script type="text/javascript" src="jspsych/plugin-survey-html-form.js"></script>
+        <script type="text/javascript" src="jspsych/plugin-survey-multi-choice.js"></script>
+        <script type="text/javascript" src="jspsych/plugin-image-keyboard-response.js"></script>
+        <script type="text/javascript" src="jspsych/plugin-image-slider-response.js"></script>
+        <script type="text/javascript" src="jspsych/plugin-multi-image-keyboard-response.js"></script>
+        <script type="text/javascript" src="jquery-3.7.0.js"></script>
+        <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe"></script>
+
+        <style>
+            img {
+                width: 256px;
+                height: 256px;
+            }
+
+        </style>
+    </head>
+    <body style="background-color:rgb(128, 128, 128)"></body>
+    <script>
+        /* Author: Cameron Phan */
+
+        function shuffle_reps(condList) {
+    
+            randList = condList;
+            var j, x, i;
+            for (i = randList.length - 1; i > 0; i--) {
+                j = Math.floor(Math.random() * (i + 1));
+                x = randList[i];
+                randList[i] = randList[j];
+                randList[j] = x;
+            }
+
+            return randList;
+        }
+
+        var fixation_ISI = 400;
+        var stimulus_duration = 100;
+        var ISI_duration = 400;
+        var lowP = 0.15;
+        var hiP = 0.35;
+
+        var IsOnline = 0;
+        var showSurvey = 1;
+        var isSONAPaid = 0;
+        var userID = 0;
+        const filename = `${userID}.csv`;
+    
+        var session = 0;
+        var researcher_name = "Cameron Kyle Phan & Grace Ziqi Zhou";
+        var time_required = "10 minutes";
+        
+        var stimTargets = ['VertL', 'VertR', 'HorL', 'HorR'];
+        var fullList = [];
+        var nRep = 240*3;
+        var nRepBlock = 240;
+
+        function endExperiment(dataset,callback) {
+            setTimeout(callback,500)    
+        }
+        
+        var jsPsych = initJsPsych({
+            /*use_webaudio: false, */
+            on_finish: function(){            
+                if (IsOnline)
+                {
+                    console.log("ONLINE END OF EXPT")
+                    endExperiment(jsPsych.data.get().filter([{trial_type: "image-keyboard-response"},{trial_type: "image-slider-response"},{trial_type: "multi-image-keyboard-response"}]).csv(), function() {
+                        document.write('<div id="endscreen" class="endscreen" style="width:1000px"><div class="endscreen" style="text-align:center; border:0px solid; padding:10px; font-size:120%; font-family: Arial, Helvetica, sans-serif; width:800px; float:right"><p><br><br><br>Experiment Finished! You can close your browser. </p></div></div>')
+                    })
+                } 
+                else 
+                {
+                    console.log("OFFLINE END OF EXPT")
+                    endExperiment(jsPsych.data.get().filter([{trial_type: "image-keyboard-response"},{trial_type: "image-slider-response"},{trial_type: "multi-image-keyboard-response"}]).csv(), function() {
+                        document.write('<div id="endscreen" class="endscreen" style="width:1000px"><div class="endscreen" style="text-align:center; border:0px solid; padding:10px; font-size:120%; font-family: Arial, Helvetica, sans-serif; width:800px; float:right"><p><br><br><br>Experiment Finished! You can close your browser. </p></div></div>')
+                    })
+                    jsPsych.data.get().filter([{trial_type: "image-keyboard-response"},{trial_type: "image-slider-response"},{trial_type: "multi-image-keyboard-response"}]).localSave('csv','subj_'+userID+'_'+'session_'+session+'.csv');
+                }
+            }
+        });
+
+        if (isSONAPaid == 0) {
+            var payment_amount = "Research Credit";
+        } else {
+            var payment_amount = "$30.00";
+        };
+
+        var timeline = [];
+
+        var consent = {
+            type: jsPsychHtmlButtonResponse,
+            stimulus: '<p>Welcome to the experiment. To begin, please read the following and press the button at the bottom of the screen.</p><p></p>' +
+            '<p><strong>Project Name: A study on cognitive processes involved in visual perception</p></strong><p></p>' +
+            '<p><strong>PARTICIPANT INFORMATION STATEMENT</strong></p><p></p>' +
+            "<strong>(1) What is the study about?"+
+            "</strong><br>You are invited to participate in a study that investigates the cognitive processes involved in perceiving and recognizing visual stimuli. "+
+            "If you decide to participate, you will be asked to complete a task in which you will view pictures, letters, numbers, or words presented on a computer screen." +
+            "<br><strong>(2) Who can participate?</strong><br>"+
+            "Anyone aged 18 years or over with access to a computer (not a phone/tablet)"+
+            "<br><strong>(3) Where is the study located?"+
+            "</strong><br>The study will be conducted in your browser"+
+            "<br><strong>(4) Who is carrying out the study?</strong><br>"+
+            "The study is being conducted by "+researcher_name+" at the University of Sydney."+
+            "<br><strong>(5) What does the study involve?"+
+            "</strong><br>In this study, you will be asked to perform tasks where you will see different stimuli appear on the computer screen. "+
+            "You will respond by pressing a key or using a computer mouse."+
+            "<br><strong>(6) How much time will this session take?"+
+            "</strong><br>The session takes about "+time_required+""+
+            "<br><strong>(7) Can I withdraw from the study?"+
+            "</strong><br>Being in this study is completely voluntary - you are not under any obligation to consent. You can withdraw at any time without having to give a reason and without penalty."+
+            "<br><strong>(8) Will anyone else know the results?"+
+            "</strong><br>All aspects of the study, including results, will be strictly confidential and only the researchers will have access to information on participants."+
+            "The results and data from the study may be submitted for publication or shared with other research labs, but individual participants will not be identifiable."+
+            "<br><strong>(9) Will the study benefit me?</strong><br>You will be awarded "+payment_amount+" for your participation upon completion of the final in-person session."+
+            "<br><strong>(10) Can I tell other people about the study?</strong><br>Yes, please tell them to contact Cameron Kyle Phan by email at cameron.phan@sydney.edu.au."+
+            "<br><strong>(11) What if I require further information about the study or my involvement in it?"+
+            "</strong><br>When you have read this information, the investigator will discuss it with you further and answer any questions you may have."+
+            "If you would like to know more at any stage, please feel free to contact Cameron Kyle Phan directly by email at cameron.phan@sydney.edu.au."+
+            "If you would like to be informed about the outcomes of the study, contact Cameron Kyle Phan directly by email at cameron.phan@sydney.edu.au."+
+            "<br><strong>(12) What if I have a complaint or any concerns?</strong><br>Any person with concerns or complaints about the conduct of a research study can contact The Manager, "+
+            "Human Ethics Administration, University of Sydney on +61 2 8627 8176 (Telephone); +61 2 8627 8177 (Facsimile) or ro.humanethics@sydney.edu.au (Email).</p><p></p>"+
+            "<strong>By participating in this experiment, you consent to participate in this study and acknowledge that:"+
+            "</strong><br>1. The procedures required for the project and the times involved have been explained to me, and any questions I have about the project have been answered to my satisfaction."+
+            "<br>2.  I have read the Above Information Statement and have been given the opportunity to discuss the information and my involvement in the project with the researcher/s."+
+            "<br>3. I understand that allowing my data to be used in research reports is completely voluntary - I am not under any obligation to consent."+
+            "<br>4. I understand that my involvement is strictly confidential. I understand that any research data gathered from the results of the study may be published"+
+            "however no information about me will be used in any way that is identifiable.</p>"+
+            "<p></p>",
+            choices: ['I CONSENT TO PARTICIPATE IN THIS STUDY'],
+            prompt: "<p><small>Click this button to continue</small></p>"
+        };
+    
+    
+        if (isSONAPaid == 0) {
+            var getUserID = {
+            type: jsPsychSurveyHtmlForm,
+            preamble: '<p>We need your Participant ID for you to receive credit for participation, awarded upon the completion of the final in-person session</p>',
+            html: '<p>Enter your Participant ID, provided in the initial sign up email <input type="number" id="test-resp-box" name="response" size="10" /></p>',
+            autofocus: 'test-resp-box',
+            on_finish: function(data){ 
+                jsPsych.data.addProperties({subjID: data.response.response});
+                userID = data.response.response;
+                if (data.response.response % 2 == 1)
+                {
+                    for (let f=0; f < nRep*hiP; f++)
+                    {
+                        fullList.push(stimTargets[0]);
+                        fullList.push(stimTargets[2]);
+                    }
+                    for (let f=0; f < nRep*lowP; f++)
+                    {
+                        fullList.push(stimTargets[1]);
+                        fullList.push(stimTargets[3]);
+                    }
+                }
+                else
+                {
+                    for (let f=0; f < nRep*hiP; f++)
+                    {
+                        fullList.push(stimTargets[1]);
+                        fullList.push(stimTargets[3]);
+                    }
+                    for (let f=0; f < nRep*0.1; f++)
+                    {
+                        fullList.push(stimTargets[0]);
+                        fullList.push(stimTargets[2]);
+                    }
+                }
+                fullList = shuffle_reps(fullList);
+            }
+            };
+        } else {
+            var getUserID = {
+            type: jsPsychSurveyHtmlForm,
+            preamble: '<p>We need your Participant ID for you to receive payment for participation, awarded upon the completion of the final in-person session</p>',
+            html: '<p>Enter your Participant ID, provided in the initial sign up email <input type="number" id="test-resp-box" name="response" size="10" /></p>',
+            autofocus: 'test-resp-box',
+            on_finish: function(data){ 
+                jsPsych.data.addProperties({subjID: data.response.response});
+                userID = data.response.response;
+                
+                if (data.response.response % 2 == 1)
+                {
+                    for (let f=0; f < nRep*hiP; f++)
+                    {
+                        fullList.push(stimTargets[0]);
+                        fullList.push(stimTargets[2]);
+                    }
+                    for (let f=0; f < nRep*lowP; f++)
+                    {
+                        fullList.push(stimTargets[1]);
+                        fullList.push(stimTargets[3]);
+                    }
+                    
+                }
+                else
+                {
+                    for (let f=0; f <nRep*hiP; f++)
+                    {
+                        fullList.push(stimTargets[1]);
+                        fullList.push(stimTargets[3]);
+                    }
+                    for (let f=0; f < nRep*lowP; f++)
+                    {
+                        fullList.push(stimTargets[0]);
+                        fullList.push(stimTargets[2]);
+                    }
+                }
+                fullList = shuffle_reps(fullList);
+            }
+            }       
+        }
+
+        var demographics = {
+            type: jsPsychSurveyHtmlForm,
+            preamble: ["<p><b>We first need some information about you</b></p>"],
+            html: '<div align=left>'+
+                '<p><b>What is your age</b><br><input name="age" type="number" required/></b><br>'+
+
+                '<p><b>Which hand is your dominant hand? (e.g., used for writing, sports, cooking, etc)?</b><br>'+
+                '<input type="radio" id="left" name="hand" value="-1" required><label for="left"> left </label>'+
+                '<input type="radio" id="right" name="hand" value="1" required><label for="right"> right </label>'+
+                '<input type="radio" id="ambidextrous (both)" name="hand" value="0" required><label for="ambidextrous"> ambidextrous </label><br>'+
+                
+                '<p><b>Which hand is your dominant hand? (e.g., used for writing, sports, cooking, etc)?</b><br>'+
+                '<input type="radio" id="Male" name="sex" value="M" required><label for="Male"> Male </label>'+
+                '<input type="radio" id="Female" name="sex" value="F" required><label for="Female"> Female </label>'+
+                '<input type="radio" id="Other" name="sex" value="O" required><label for="Other"> Other </label><br>'+
+                '</div>',
+            data: {test_part: 'Demographics'},
+            post_trial_gap: 500,
+            on_finish: function(data){
+                jsPsych.data.addProperties({age: data.response.age, hand: data.response.hand, sex: data.response.sex});
+            }
+        };
+
+        var instructions = {
+            type: jsPsychHtmlKeyboardResponse,
+            choices: [' '],
+            stimulus: '<p><b>Instructions</b></p>',
+            prompt: function(){
+            var current_session = jsPsych.data.get().last(1).values()[0].sessionID;
+            if (current_session == 1)
+            {
+                return `
+                <p>In this experiment, you will watch 3 x 2 minute series of orientated bars.</p><p>After each series, you will be asked about the probability of seeing the different bars.</p>
+
+                <b>POOR PERFORMANCE WILL RESULT IN YOUR PARTICIPATION BEING DISQUALIFIED.</b> 
+            
+                <p><b>Press the space bar to begin.</b></p>
+                `                    
+            }
+            else
+            {
+                return `
+                <p>As it was in previous sessions, you will watch 3 x 2 minute series of orientated bars.</p><p>After each series, you will be asked about the probability of seeing the different bars.</p>
+
+                <b>POOR PERFORMANCE WILL RESULT IN YOUR PARTICIPATION BEING DISQUALIFIED.</b> 
+            
+                <p><b>Press the space bar to begin.</b></p>
+                ` 
+            }
+            }
+        };
+
+        var sessionNumber = {
+            type: jsPsychSurveyMultiChoice,
+            preamble: 'Please answer the following question',
+            questions:[
+                {
+                    prompt: 'Which online session are you up to?',
+                    name: 'sessionNum',
+                    options: [1, 2, 3, 4],
+                    required: true
+                }
+            ],
+            on_finish: function(data){
+                data.session = data.response.sessionNum;
+                session = data.response.sessionNum;
+                jsPsych.data.addProperties({sessionID: data.response.sessionNum});
+            }
+        };
+
+        var setup = {
+          timeline:[consent, demographics],
+          conditional_function: function(){
+            var current_session = jsPsych.data.get().last(1).values()[0].sessionID;
+            if (current_session == 1)
+            {
+              return true;
+            }
+            else
+            {
+              return false;
+            }
+          }
+        }
+
+        timeline.push(getUserID);
+        timeline.push(sessionNumber);
+        timeline.push(setup);
+        timeline.push(instructions);
+
+        
+        const save_data = {
+            type: jsPsychPipe,
+            action: "save",
+            experiment_id: "Jogk5ldVksld",
+            filename: filename,
+            data_string: ()=>jsPsych.data.get().filter([{trial_type: "image-keyboard-response"},{trial_type: "image-slider-response"},{trial_type: "multi-image-keyboard-response"}]).csv()
+        };
+
+        var fixation = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: '<p style="font-size: 48px;">+</p>',
+            choices: "NO_KEYS",
+            trial_duration: fixation_ISI,
+        };  
+        var isi_blank = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: '<p style="font-size: 48px;">+</p>',
+            choices: "NO_KEYS",
+            trial_duration: ISI_duration,
+        };  
+
+        timeline.push(fixation);
+        var stim_cont = 0;
+        var training_trial = 
+        {
+            type: jsPsychImageKeyboardResponse,
+            stimulus_height: 256,
+            stimulus_width: 256,
+            stimulus: function(){
+                return 'stimuli/'+fullList[stim_cont]+'.png';
+            },
+            choices: "NO_KEYS",
+            stimulus_duration: stimulus_duration,
+            trial_duration: stimulus_duration,
+            data: 
+            {
+                stimulus: function()
+                {
+                    return fullList[stim_cont]
+                },
+                phase: 'Training',
+                trial: function(){return stim_cont+1}
+            },
+            on_finish: function(data) 
+            {
+                stim_cont += 1;
+            }
+        }
+
+        for (var event_num = 0; event_num < nRepBlock; event_num++) 
+        {
+            timeline.push(training_trial);
+            timeline.push(isi_blank);
+        }
+
+        var ans_count = 0;
+        
+        var discrimination = {
+            type: jsPsychMultiImageKeyboardResponse,
+            stimuli_radii: [256],
+            stimuli_heights: [256, 256],
+            stimuli_widths: [256, 256],
+            prompt:'<p style="font-size: 48px;">Which one was presented more?</p><p style="font-size: 48px;">LEFT arrow key for LEFT, RIGHT arrow key for RIGHT</p>',
+            canvas_bg: 128,
+            stimuli: function(){
+                if (ans_count == 0)
+                {
+                    return ['stimuli/'+stimTargets[0]+'.png', 'stimuli/'+stimTargets[1]+'.png'];
+                }
+                else if (ans_count == 1)
+                {
+                    return ['stimuli/'+stimTargets[2]+'.png', 'stimuli/'+stimTargets[3]+'.png'];
+                }
+                else if (ans_count == 2)
+                {
+                    return ['stimuli/'+stimTargets[0]+'.png', 'stimuli/'+stimTargets[2]+'.png'];
+                }
+                else if (ans_count == 3)
+                {
+                    return ['stimuli/'+stimTargets[1]+'.png', 'stimuli/'+stimTargets[3]+'.png'];
+                }
+                else if (ans_count == 4)
+                {
+                    return ['stimuli/'+stimTargets[0]+'.png', 'stimuli/'+stimTargets[3]+'.png'];
+                }
+                else if (ans_count == 5)
+                {
+                    return ['stimuli/'+stimTargets[1]+'.png', 'stimuli/'+stimTargets[2]+'.png'];
+                }
+
+            },
+            choices: ["ArrowLeft", "ArrowRight"],
+            stimuli_locations: function(){
+                return [3, 9];
+            },
+            data: 
+            {
+                phase: 'Testing'
+            },
+            on_finish: function(data) 
+            {
+                ans_count += 1;
+                if (ans_count == 6)
+                {
+                    ans_count = 0;
+                }
+            }
+        };
+        
+        var confidence = {
+            type: jsPsychImageSliderResponse,
+            min: 0,
+            max: 100,
+            slider_start: 50,
+            labels: ["0%","25%", "50%", "75%", "100%"],
+            require_movement: true,
+            prompt:'<p style="font-size: 24px;">How confident are you in your answer?</p>',
+        }
+
+        timeline.push(discrimination);
+        timeline.push(confidence);
+        timeline.push(discrimination);
+        timeline.push(confidence);
+        timeline.push(discrimination);
+        timeline.push(confidence);
+        timeline.push(discrimination);
+        timeline.push(confidence);
+        timeline.push(discrimination);
+        timeline.push(confidence);
+        timeline.push(discrimination);
+        timeline.push(confidence);
+        
+        var interblock = {
+            type: jsPsychHtmlKeyboardResponse,
+            choices: [' '],
+            stimulus: '<p><b>Instructions</b></p>',
+            prompt: function(session){
+                return `
+                <b>Take a break before beginning the next presentation series.</b> 
+            
+                <p><b>Press the space bar to begin.</b></p>
+                `                    
+            }
+        }
+        timeline.push(interblock);
+        timeline.push(fixation);
+
+        for (var event_num = 0; event_num < nRepBlock; event_num++) 
+        {
+            timeline.push(training_trial);
+            timeline.push(isi_blank);
+        }
+
+        timeline.push(discrimination);
+        timeline.push(confidence);
+        timeline.push(discrimination);
+        timeline.push(confidence);
+        timeline.push(discrimination);
+        timeline.push(confidence);
+        timeline.push(discrimination);
+        timeline.push(confidence);
+        timeline.push(discrimination);
+        timeline.push(confidence);
+        timeline.push(discrimination);
+        timeline.push(confidence);
+
+        timeline.push(interblock);
+        timeline.push(fixation);
+
+        for (var event_num = 0; event_num < nRepBlock; event_num++) 
+        {
+            timeline.push(training_trial);
+            timeline.push(isi_blank);
+        }       
+
+        timeline.push(discrimination);
+        timeline.push(confidence);
+        timeline.push(discrimination);
+        timeline.push(confidence);
+        timeline.push(discrimination);
+        timeline.push(confidence);
+        timeline.push(discrimination);
+        timeline.push(confidence);
+        timeline.push(discrimination);
+        timeline.push(confidence);
+        timeline.push(discrimination);
+        timeline.push(confidence);
+
+        if (showSurvey) 
+        {
+            var receipt = 
+            {
+                type: jsPsychHtmlKeyboardResponse,
+                stimulus: 'FIN',
+                choices: [' '],
+                prompt: function(){
+
+                    return '<p>Thank you. You have completed session '+session+'. <br>Please take a screenshot of this screen (or take a picture with your phone) as additional confirmation of your participation<br><br><br><b>'+userID+'</b><br><br><br>Press the space bar to continue.</p>'    
+            
+                }
+            }
+            timeline.push(receipt);
+            timeline.push(save_data);
+        }
+
+    jsPsych.run(timeline);
+    </script>
+</html>
